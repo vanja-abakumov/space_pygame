@@ -113,12 +113,21 @@ number_of_enemies = random.randrange(1, 10)
 game_folder = os.path.dirname(__file__)  # Получение пути к папке где лежит игра в независимости от ОС
 IMG_FOLDER = os.path.join(game_folder, 'img')  # Создаем путь к папке ing НЕ ЗАВИСИМО ОТ ИСПОЛЬЗУЕМОЙ ОС !!!
 
+
 # Создаем игру и окно
 pygame.init()
 pygame.mixer.init()  # инициализируем звук
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("My Game")
 clock = pygame.time.Clock()
+
+
+# Загрузка фонового изображения
+img_file = os.path.join(IMG_FOLDER, 'starfield.png')  # Создаем путь к файлу file_name, в котором лежит картинка спрайта
+background = pygame.image.load(img_file).convert()
+# Преобразование имиджа к размеру, переданному в кортедже
+background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+background_rect = background.get_rect()
 
 all_sprites = pygame.sprite.Group()  # Создаем екземпляр класса Group в котором будут хранится наши спрайты
 # Создаем экземпляр спрайта из графического файла, имя которого передаем через класс Player
@@ -127,7 +136,7 @@ all_sprites.add(player)  # Помещаем наш спрайт ( экземпл
 mobs = pygame.sprite.Group()  # Группа для врагов
 stars = pygame.sprite.Group()  # Группа для пуль-звездочек
 
-for i in range(number_of_enemies):
+for i in range(3):
     enemy = Enemy('blockerMad.png')
     all_sprites.add(enemy)  # Помещаем наш спрайт ( экземпляр класса Player ) в коробочку для хранения спрайтов
     mobs.add(enemy)
@@ -154,11 +163,12 @@ while running:
 
     # Проверка, не ударил ли моб игрока
     hits = pygame.sprite.spritecollide(player, mobs, False)
-    #if hits:
-    #    running = False
+    if hits:
+        print('***')
 
     # Рендеринг
-    screen.fill(BLUE)
+    screen.fill(BLACK)
+    screen.blit(background, background_rect)
     all_sprites.draw(screen)
     # После отрисовки всего, переворачиваем экран
     pygame.display.flip()
