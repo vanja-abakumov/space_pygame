@@ -1,4 +1,5 @@
 # Pygame шаблон - скелет для нового проекта Pygame
+
 import pygame
 import os
 import random
@@ -9,7 +10,8 @@ class Player(pygame.sprite.Sprite):  # Класс спрайта наследу�
     # Функция ( метод ) инициализации принимает в качестве параметра имя файла из которого создастся спрайт
     def __init__(self, file_name):
         pygame.sprite.Sprite.__init__(self)  # Вызываем функцию инициализации родителького класса Sprite
-        img_file = os.path.join(IMG_FOLDER, file_name)  # Создаем путь к файлу file_name, в котором лежит картинка спрайта
+        img_file = os.path.join(IMG_FOLDER, file_name)  # Создаем путь к файлу file_name, в котором лежит картинка
+        # спрайта
         player_img = pygame.image.load(img_file)  # Создаем переменную, в которую загружаем картинку спрайта
         self.image = player_img.convert()  # Преобразуем загруженный спрайт в вид скоторым удобней работать pygame
         self.image.set_colorkey(BLACK)  # Удаляем лишние черные пиксели, что бы контур был ровный
@@ -112,6 +114,7 @@ number_of_enemies = random.randrange(1, 10)
 # __file__ магическая переменная Питона, в ней всегда находится путь с которого запущена программа
 game_folder = os.path.dirname(__file__)  # Получение пути к папке где лежит игра в независимости от ОС
 IMG_FOLDER = os.path.join(game_folder, 'img')  # Создаем путь к папке ing НЕ ЗАВИСИМО ОТ ИСПОЛЬЗУЕМОЙ ОС !!!
+SOUND_FOLDER = os.path.join(game_folder, 'sound')  # Создаем путь к папке sound НЕ ЗАВИСИМО ОТ ИСПОЛЬЗУЕМОЙ ОС !!!
 
 
 # Создаем игру и окно
@@ -126,17 +129,20 @@ clock = pygame.time.Clock()
 img_file = os.path.join(IMG_FOLDER, 'starfield.png')  # Создаем путь к файлу file_name, в котором лежит картинка спрайта
 background = pygame.image.load(img_file).convert()
 # Преобразование имиджа к размеру, переданному в кортедже
-background = pygame.transform.scale(background, (WIDTH, HEIGHT))
-background_rect = background.get_rect()
+background_new = pygame.transform.scale(background, (WIDTH, HEIGHT))
+background_rect = background_new.get_rect()
+# Загрузка мелодий игры
+shoot_sound = pygame.mixer.Sound(os.path.join(SOUND_FOLDER, 'pew.wav'))
 
 all_sprites = pygame.sprite.Group()  # Создаем екземпляр класса Group в котором будут хранится наши спрайты
 # Создаем экземпляр спрайта из графического файла, имя которого передаем через класс Player
 player = Player('p1_jump.png')
-all_sprites.add(player)  # Помещаем наш спрайт ( экземпляр класса Player ) в коробочку для хранения спрайтов
-mobs = pygame.sprite.Group()  # Группа для врагов
+all_sprites.add(player )  # Помещаем наш спрайт ( экземпляр класса Player ) в коробочку для хранения спрайтов
+mobs = pygame.sprite.Group()
+# Группа для врагов
 stars = pygame.sprite.Group()  # Группа для пуль-звездочек
 
-for i in range(3):
+for i in range(10):
     enemy = Enemy('blockerMad.png')
     all_sprites.add(enemy)  # Помещаем наш спрайт ( экземпляр класса Player ) в коробочку для хранения спрайтов
     mobs.add(enemy)
@@ -153,22 +159,23 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
+            if event.key == pygame.K_SPACE:  # Добавление звездочки-пули по нажатию пробела
                 star = Star("star.png", player.rect.x, player.rect.y)
                 all_sprites.add(star)
                 stars.add(star)
+                shoot_sound.play()
 
     # Обновление
     all_sprites.update()
 
     # Проверка, не ударил ли моб игрока
-    hits = pygame.sprite.spritecollide(player, mobs, False)
-    if hits:
-        print('***')
+    hits = pygame.sprite.spritecollide(player, mobs,  False)
+    for star_ in stars:
+        hits = pygame.sprite.spritecollide(star_, mobs,  True)
 
     # Рендеринг
     screen.fill(BLACK)
-    screen.blit(background, background_rect)
+    screen.blit(background_new, background_rect)
     all_sprites.draw(screen)
     # После отрисовки всего, переворачиваем экран
     pygame.display.flip()
