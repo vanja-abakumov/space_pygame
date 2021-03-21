@@ -25,6 +25,7 @@ class Player(pygame.sprite.Sprite):  # Класс спрайта наследу�
         self.rect.bottom = HEIGHT / 2
 
         self.speedx = 0
+        self.shield = 100
         self.speedy = 0
 
     def update(self):
@@ -97,6 +98,20 @@ class Star(Player):
             self.kill()
 
 
+class Bang(Player):
+    def __init__(self, file_name, x, y):
+        Player.__init__(self, file_name)
+        self.rect.bottom = y + 100
+        self.rect.centerx = x + 10
+        self.create_time = pygame.time.get_ticks()
+
+    def update(self):
+
+        delay = pygame.time.get_ticks() - self.create_time
+
+        if delay > 100:
+            pygame.quit()
+
 
 WIDTH = 480
 HEIGHT = 600
@@ -117,14 +132,12 @@ game_folder = os.path.dirname(__file__)  # Получение пути к пап
 IMG_FOLDER = os.path.join(game_folder, 'img')  # Создаем путь к папке ing НЕ ЗАВИСИМО ОТ ИСПОЛЬЗУЕМОЙ ОС !!!
 SOUND_FOLDER = os.path.join(game_folder, 'sound')  # Создаем путь к папке sound НЕ ЗАВИСИМО ОТ ИСПОЛЬЗУЕМОЙ ОС !!!
 
-
 # Создаем игру и окно
 pygame.init()
 pygame.mixer.init()  # инициализируем звук
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("My Game")
 clock = pygame.time.Clock()
-
 
 # Загрузка фонового изображения
 img_file = os.path.join(IMG_FOLDER, 'starfield.png')  # Создаем путь к файлу file_name, в котором лежит картинка спрайта
@@ -134,16 +147,16 @@ background_new = pygame.transform.scale(background, (WIDTH, HEIGHT))
 background_rect = background_new.get_rect()
 # Загрузка мелодий игры
 shoot_sound = pygame.mixer.Sound(os.path.join(SOUND_FOLDER, 'pew.wav'))
+explosion = os.path.join(IMG_FOLDER, 'sonicExplosion02.png')
 
 all_sprites = pygame.sprite.Group()  # Создаем екземпляр класса Group в котором будут хранится наши спрайты
 # Создаем экземпляр спрайта из графического файла, имя которого передаем через класс Player
 player = Player('p1_jump.png')
 all_sprites.add(player)  # Помещаем наш спрайт ( экземпляр класса Player ) в коробочку для хранения спрайтов
-mobs = pygame.sprite.Group()
-# Группа для врагов
+mobs = pygame.sprite.Group() # Группа для врагов
 stars = pygame.sprite.Group()  # Группа для пуль-звездочек
 
-for i in range(500000):
+for i in range(3):
     enemy = Enemy('blockerMad.png')
     all_sprites.add(enemy)  # Помещаем наш спрайт ( экземпляр класса Player ) в коробочку для хранения спрайтов
     mobs.add(enemy)
@@ -161,20 +174,25 @@ while running:
             running = False
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:  # Добавление звездочки-пули по нажатию пробела
-                star = Star("star.png", player.rect.x, player.rect.y)
-                all_sprites.add(star)
-                stars.add(star)
+                star_ = Star("star.png", player.rect.x, player.rect.y)
+                all_sprites.add(star_)
+                stars.add(star_)
                 shoot_sound.play()
+
+    # Проверка, не ударил ли моб игрока
+    hits = pygame.sprite.spritecollide(player, mobs, False)
+    if hits:
+        all_sprites.add(Bang('sonicExplosion02.png', player.rect.x, player.rect.y))
+        player.kill()
+        #running = False
+
+    for star_ in stars:
+        hits = pygame.sprite.spritecollide(star_, mobs, True)
+        if hits:
+            star_.kill()
 
     # Обновление
     all_sprites.update()
-
-    # Проверка, не ударил ли моб игрока
-    hits = pygame.sprite.spritecollide(player, mobs,  False)
-    for star_ in stars:
-        hits = pygame.sprite.spritecollide(star_, mobs,  True)
-        if hits:
-            star_.kill()
 
     # Рендеринг
     screen.fill(BLACK)
