@@ -98,23 +98,67 @@ class Star(Player):
             self.kill()
 
 
-class Bang(Player):
-    def __init__(self, file_name, x, y):
-        Player.__init__(self, file_name)
-        self.rect.bottom = y + 100
-        self.rect.centerx = x + 10
-        self.create_time = pygame.time.get_ticks()
+class AnimatedSprite(pygame.sprite.Sprite):
 
-    def update(self):
+    def __init__(self, l_file_name: list, x:int, y: int, size_x: int, size_y: int):
+        """
+             Функция ( метод ) инициализации принимает в качестве параметра список имен файлов картинок из которых
+             создастся анимация спрайта, координаты x,y где будет показана анимация и размер каждого спрайта
 
-        delay = pygame.time.get_ticks() - self.create_time
+        :param x: Кордината по х где будет показана анимация
+        :param y: Координата по y где будет показана анимация
+        :param size_x: Размер каждого спрайта по х
+        :param size_y: Размер каждого спрайта по y
+        :param l_file_name: Список имен файлов из которых создается картинка
 
-        if delay > 100:
-            pygame.quit()
+        """
+
+        pygame.sprite.Sprite.__init__(self)  # Вызываем функцию инициализации родителького класса Sprite
+
+        self.size_x = size_x  # Передаем size_х в внутреннее пространство имен класса
+        self.size_y = size_y  # Передаем size_y в внутреннее пространство имен класса
+        self.x = x  # Передаем х в внутреннее пространство имен класса
+        self.y = y  # Передаем y в внутреннее пространство имен класса
+
+        self.l_image = []  # Список где будут лежать подготовленные для анимации спрайты
+
+        # Создаем спсиок спрайтов, для анимации
+        for file_name in l_file_name:
+            img_file_ = os.path.join(IMG_FOLDER, file_name)  # Создаем путь к файлу file_name, в котором лежит картинка
+            player_img = pygame.image.load(img_file_)  # Создаем переменную, в которую загружаем картинку спрайта
+            image = player_img.convert()  # Преобразуем загруженный спрайт в вид скоторым удобней работать pygame
+            image.set_colorkey(BLACK)  # Удаляем лишние черные пиксели, что бы контур был ровный
+            # Изменяем размер каждого спрайта на нужный нам
+            image_new = pygame.transform.scale(image, (self.size_x, self.size_y))
+            self.l_image.append(image_new)  # Добавляем в список спрайтов, новый спрайт анимации
+
+        self.number_sprite = 0
+
+        self.image = self.l_image[self.number_sprite]    # Показываем первый спрайт
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+
+        self.last_update = pygame.time.get_ticks()  # Инициализация last_update, временем инициализации класса
+
+    def update(self):  # Помним, что эта функция ( метод ) вызывается pygame постоянно
+
+        now = pygame.time.get_ticks()  # Внутреннее время pygame, которое есть сейчас
+        if now - self.last_update > 30: # Если с момента прошлого вызова, прошло более 30 внутренних секунд, то..
+            self.last_update = now  # Запонимаем в last_update когда это произошло
+            self.number_sprite += 1  # Переходим к показу следующего спрайта
+            try:  # Пробуем показаеть следующий спрайт
+                self.image = self.l_image[self.number_sprite]
+                self.rect = self.image.get_rect()
+                self.rect.x = self.x
+                self.rect.y = self.y
+
+            except IndexError: # Если, все спрайты кончились, то убиваем экземпляр класса
+                self.kill()
 
 
-WIDTH = 480
-HEIGHT = 600
+WIDTH = 480  # Размер игрового окна по шире
+HEIGHT = 600  # Размер игрового окна по высоте
 FPS = 60
 
 # Задаем цвета
@@ -125,6 +169,9 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
 number_of_enemies = random.randrange(1, 10)
+l_bang = ['regularExplosion00.png', 'regularExplosion01.png', 'regularExplosion02.png', 'regularExplosion03.png',
+          'regularExplosion04.png', 'regularExplosion05.png', 'regularExplosion06.png', 'regularExplosion07.png',
+          'regularExplosion08.png']
 
 # Настройка пути к папке img, где лежит графика для спрайтов ( папка асетов )
 # __file__ магическая переменная Питона, в ней всегда находится путь с которого запущена программа
@@ -156,13 +203,13 @@ all_sprites.add(player)  # Помещаем наш спрайт ( экземпл
 mobs = pygame.sprite.Group() # Группа для врагов
 stars = pygame.sprite.Group()  # Группа для пуль-звездочек
 
-for i in range(3):
+for i in range(number_of_enemies):
     enemy = Enemy('blockerMad.png')
     all_sprites.add(enemy)  # Помещаем наш спрайт ( экземпляр класса Player ) в коробочку для хранения спрайтов
     mobs.add(enemy)
 
 # Цикл игры
-HP = 3
+
 running = True
 while running:
     # Держим цикл на правильной скорости
@@ -182,14 +229,15 @@ while running:
     # Проверка, не ударил ли моб игрока
     hits = pygame.sprite.spritecollide(player, mobs, False)
     if hits:
-        all_sprites.add(Bang('sonicExplosion02.png', player.rect.x, player.rect.y))
-        player.kill()
+        pass
+        #player.kill()
         #running = False
 
     for star_ in stars:
         hits = pygame.sprite.spritecollide(star_, mobs, True)
         if hits:
             star_.kill()
+            all_sprites.add(AnimatedSprite(l_bang, star_.rect.x, star_.rect.y, 70, 70))
 
     # Обновление
     all_sprites.update()
