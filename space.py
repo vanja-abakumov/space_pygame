@@ -132,7 +132,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
             image_new = pygame.transform.scale(image, (self.size_x, self.size_y))
             self.l_image.append(image_new)  # Добавляем в список спрайтов, новый спрайт анимации
 
-        self.number_sprite = 0
+        self.number_sprite = 0  # Номер спрайта, который сейчас показывается в анимации
 
         self.image = self.l_image[self.number_sprite]  # Показываем первый спрайт
         self.rect = self.image.get_rect()
@@ -145,7 +145,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
     def update(self):  # Помним, что эта функция ( метод ) вызывается pygame постоянно
 
         now = pygame.time.get_ticks()  # Внутреннее время pygame, которое есть сейчас
-        if now - self.last_update > 50:  # Если с момента прошлого вызова, прошло более 30 внутренних секунд, то..
+        if now - self.last_update > 50:  # Если с момента прошлого вызова, прошло более ХХ внутренних секунд, то..
             self.last_update = now  # Запонимаем в last_update время показа спрайта
             self.number_sprite += 1  # Переходим к показу следующего спрайта
             try:  # Пробуем показаеть следующий спрайт
@@ -158,7 +158,7 @@ class AnimatedSprite(pygame.sprite.Sprite):
                 self.kill()
 
 
-def draw_text(surf, text: str, size: int, x: int, y: int):
+def draw_text(surf: pygame.Surface, text: str, size: int, x: int, y: int):
     """
         Ф-ция для выведения текста, шрифтом arial
 
@@ -172,7 +172,7 @@ def draw_text(surf, text: str, size: int, x: int, y: int):
 
     font_name = pygame.font.match_font('arial')  # Получить имя шрифта, для шрифта типа arial
     font = pygame.font.Font(font_name, size)  # Получить сам шрифт, по его имени и размеру
-    text_surface = font.render(text, True, WHITE)  # Преобразовать текст в набор пикселов ( редендринг )
+    text_surface = font.render(text, True, RED)  # Преобразовать текст в набор пикселов ( редендринг )
     text_rect = text_surface.get_rect()  # Берем rect вокруг от редендренгового текста
     text_rect.midtop = (x, y)  # Помещаем центр rect в точку (x,y)
     # На поверхность surf наносится поверхность text_surface с координатами text_rect
@@ -182,14 +182,13 @@ def draw_text(surf, text: str, size: int, x: int, y: int):
 def f_game_over():  # Выводим заставку в конце игры
     draw_text(screen, "Deep SPACE!", 64, WIDTH / 2, HEIGHT / 4)
     draw_text(screen, "by Ivan Abakumov", 32, WIDTH / 2, HEIGHT / 2)
-    draw_text(screen, "Press Q to quit", 22, WIDTH / 2, HEIGHT * 3 / 4)
-    pygame.display.flip()
+    pygame.display.flip()  # После отрисовки всего, переворачиваем экран
     waiting = True
     while waiting:
         clock.tick(FPS)
         for event in pygame.event.get():
             # Завершение игры или по закрытию окна или по нажатию клавиши q
-            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_q):
+            if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
 
@@ -208,7 +207,7 @@ RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 
-number_of_enemies = random.randrange(1, 10)
+number_of_enemies = random.randrange(1, 10)  # Количество врагов на экране
 # Список картинок из которых будет создан анимированный спрайт-взрыв
 l_bang = ['regularExplosion00.png', 'regularExplosion01.png', 'regularExplosion02.png', 'regularExplosion03.png',
           'regularExplosion04.png', 'regularExplosion05.png', 'regularExplosion06.png', 'regularExplosion07.png',
@@ -233,6 +232,7 @@ background = pygame.image.load(img_file).convert()
 # Преобразование имиджа к размеру, переданному в кортедже
 background_new = pygame.transform.scale(background, (WIDTH, HEIGHT))
 background_rect = background_new.get_rect()
+
 # Загрузка мелодий игры
 shoot_sound = pygame.mixer.Sound(os.path.join(SOUND_FOLDER, 'pew.wav'))  # Звук выстрела
 pygame.mixer.music.load(os.path.join(SOUND_FOLDER, 'space.wav'))  # Фоновая музычка. Для фона почему то надо делать так
@@ -246,7 +246,7 @@ all_sprites.add(player)  # Помещаем наш спрайт ( экземпл
 mobs = pygame.sprite.Group()  # Группа для врагов
 stars = pygame.sprite.Group()  # Группа для пуль-звездочек
 
-for i in range(number_of_enemies):
+for i in range(number_of_enemies):  # Создаем экземпляры класса врагов и помещаем их в специальную вражую группу
     enemy = Enemy('blockerMad.png')
     all_sprites.add(enemy)  # Помещаем наш спрайт ( экземпляр класса Player ) в коробочку для хранения спрайтов
     mobs.add(enemy)
@@ -256,7 +256,7 @@ for i in range(number_of_enemies):
 running = True
 while running:
     if number_of_enemies == 0:  # Когда все мобы убиты, то выпускаем новую стаю
-        number_of_enemies = random.randrange(1, 10)
+        number_of_enemies = random.randrange(1, 10)  # Тот же код, что и выше, который выполняется при запуске
         for i in range(number_of_enemies):
             enemy = Enemy('blockerMad.png')
             all_sprites.add(enemy)  # Помещаем наш спрайт ( экземпляр класса Player ) в коробочку для хранения спрайтов
@@ -289,8 +289,9 @@ while running:
     # роверка не сшибла ли звездочка mob'a
     for star_ in stars:
         hits = pygame.sprite.spritecollide(star_, mobs, True)
-        for hit in hits:
-            star_.kill()
+        for hit in hits:  # Одна звездочка может убить несколько мобов
+            star_.kill()  # Убрать с экрана звездочку, которая попала в моба
+            # Когда звездочка убила моба, то возникает взрыв. Создаем экземпляр класса, отвечающего за взрыв
             bang = AnimatedSprite(l_bang, star_.rect.x, star_.rect.y, 70, 70)
             all_sprites.add(bang)
             score += 1  # Добавляем очки за каждого убитого моба
@@ -305,7 +306,6 @@ while running:
     all_sprites.draw(screen)
     draw_text(screen, f"Вы убили {score} mob'ов", 18, WIDTH / 2, 10)
     draw_text(screen, f"Остаток жизней {lives}", 25, WIDTH / 2, HEIGHT - 35)
-    # После отрисовки всего, переворачиваем экран
-    pygame.display.flip()
+    pygame.display.flip()  # После отрисовки всего, переворачиваем экран
 
 pygame.quit()
